@@ -2,7 +2,7 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
-plt.rcParams['font.family'] = 'DejaVu Sans'  # for English label rendering
+plt.rcParams['font.family'] = 'DejaVu Sans'  # 文字化け対策：英語フォントに限定
 
 st.set_page_config(page_title="住宅コスト比較シミュレーター", layout="centered")
 
@@ -26,8 +26,6 @@ apt_loan_rate = st.sidebar.number_input("ローン金利（％）", value=1.0)
 apt_kanri = st.sidebar.number_input("管理費（万円/月）", value=1.2)
 apt_shuzen = st.sidebar.number_input("修繕積立金（万円/月）", value=1.5)
 apt_parking = st.sidebar.number_input("駐車場代（万円/月）", value=1.0)
-apt_kojo_years = st.sidebar.number_input("住宅ローン控除年数（マンション）", value=10)
-apt_kojo_rate = st.sidebar.number_input("住宅ローン控除還元率（マンション, ％）", value=1.0)
 
 #🏠一条工務店
 st.sidebar.subheader("🏠 一条の設定")
@@ -38,11 +36,20 @@ ichijo_utility = st.sidebar.number_input("光熱費（万円/月）", value=0.8)
 ichijo_solar_income = st.sidebar.number_input("太陽光売電収入（万円/月）", value=0.5)
 ichijo_repair_year = st.sidebar.number_input("定期修繕実施年", value=20)
 ichijo_repair_cost = st.sidebar.number_input("定期修繕費用（万円）", value=100)
-ichijo_kojo_years = st.sidebar.number_input("住宅ローン控除年数（一条）", value=10)
-ichijo_kojo_rate = st.sidebar.number_input("住宅ローン控除還元率（一条, ％）", value=1.0)
 
-#📈共通設定
-st.sidebar.subheader("📈 共通設定")
+#💰住宅ローン控除
+st.sidebar.subheader("💰 住宅ローン控除の設定")
+
+st.sidebar.markdown("**🏢 マンションの住宅ローン控除**")
+apt_kojo_years = st.sidebar.number_input("控除適用年数（年）", value=10, key="apt_kojo_years")
+apt_kojo_rate = st.sidebar.number_input("還元率（％）", value=1.0, key="apt_kojo_rate")
+
+st.sidebar.markdown("**🏠 一条の住宅ローン控除**")
+ichijo_kojo_years = st.sidebar.number_input("控除適用年数（年）", value=10, key="ichijo_kojo_years")
+ichijo_kojo_rate = st.sidebar.number_input("還元率（％）", value=1.0, key="ichijo_kojo_rate")
+
+#📈共通インフレ設定
+st.sidebar.subheader("📈 インフレ設定")
 inflation_rate = st.sidebar.slider("インフレ率（％）", 0.0, 5.0, 1.0)
 
 # 支払い計算
@@ -55,7 +62,7 @@ ichijo_monthly_list = []
 for y in range(1, years + 1):
     inflator = (1 + inflation_rate / 100) ** (y - 1)
 
-    # マンション月額
+    # マンション
     apt_total = apt_monthly if y <= apt_loan_years else 0
     apt_total += (apt_kanri + apt_shuzen) * 10000 * inflator
     apt_total += apt_parking * 10000
@@ -63,7 +70,7 @@ for y in range(1, years + 1):
         apt_total -= apt_loan * 10000 * apt_kojo_rate / 100 / 12
     apt_monthly_list.append(apt_total)
 
-    # 一条月額
+    # 一条
     ichijo_total = ichijo_monthly if y <= ichijo_loan_years else 0
     ichijo_total += ichijo_utility * 10000
     ichijo_total -= ichijo_solar_income * 10000
@@ -73,11 +80,11 @@ for y in range(1, years + 1):
         ichijo_total -= ichijo_loan * 10000 * ichijo_kojo_rate / 100 / 12
     ichijo_monthly_list.append(ichijo_total)
 
-# 累積
+# 累積計算
 apt_cumsum = [sum(apt_monthly_list[:i + 1]) for i in range(years)]
 ichijo_cumsum = [sum(ichijo_monthly_list[:i + 1]) for i in range(years)]
 
-# グラフ
+# グラフ表示
 fig, ax = plt.subplots(2, 1, figsize=(10, 8))
 x = list(range(1, years + 1))
 
