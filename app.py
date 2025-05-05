@@ -2,6 +2,8 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
+st.set_page_config(page_title="住宅コスト比較シミュレーター", layout="centered")
+
 def calculate_monthly_payment(principal, annual_rate, years):
     r = annual_rate / 100 / 12
     n = years * 12
