@@ -1,7 +1,4 @@
-
 import streamlit as st
-import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
 
 st.set_page_config(page_title="住宅コスト比較シミュレーター", layout="centered")
 
@@ -12,7 +9,7 @@ def calculate_monthly_payment(principal, annual_rate, years):
         return principal * 10000 / n
     return principal * 10000 * r * (1 + r) ** n / ((1 + r) ** n - 1)
 
-st.title("🏡 マンション vs 一条工務店：コスト比較シミュレーター")
+st.title("🏡 マンション vs 一条工務店：コスト比較シミュレーター（軽量版）")
 
 st.sidebar.header("📊 基本設定")
 years = st.sidebar.slider("比較年数（年）", 10, 50, 35, key="years")
@@ -69,29 +66,22 @@ for y in range(1, years + 1):
 apt_cumsum = [sum(apt_monthly_list[:i + 1]) for i in range(years)]
 ichijo_cumsum = [sum(ichijo_monthly_list[:i + 1]) for i in range(years)]
 
-# グラフ描画
-fig, ax = plt.subplots(2, 1, figsize=(10, 8))
-x = list(range(1, years + 1))
+# 結果表示（表形式）
+import pandas as pd
+df = pd.DataFrame({
+    "Year": list(range(1, years + 1)),
+    "Mansion Monthly (円)": [f"{int(v):,}" for v in apt_monthly_list],
+    "Ichijo Monthly (円)": [f"{int(v):,}" for v in ichijo_monthly_list],
+    "Mansion Cumulative (円)": [f"{int(v):,}" for v in apt_cumsum],
+    "Ichijo Cumulative (円)": [f"{int(v):,}" for v in ichijo_cumsum],
+})
 
-# 月々の支払額
-ax[0].plot(x, apt_monthly_list, label="Mansion", marker='o')
-ax[0].plot(x, ichijo_monthly_list, label="Ichijo", marker='s')
-ax[0].set_title("Monthly Payment")
-ax[0].set_xlabel("Year")
-ax[0].set_ylabel("JPY/month")
-ax[0].yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f"{int(x):,}"))
-ax[0].legend()
-ax[0].grid(True)
+st.subheader("📄 年別支払い内訳")
+st.dataframe(df, use_container_width=True)
 
-# 累積支払額
-ax[1].plot(x, apt_cumsum, label="Mansion", marker='o')
-ax[1].plot(x, ichijo_cumsum, label="Ichijo", marker='s')
-ax[1].set_title("Cumulative Payment")
-ax[1].set_xlabel("Year")
-ax[1].set_ylabel("JPY (cumulative)")
-ax[1].yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f"{int(x):,}"))
-ax[1].legend()
-ax[1].grid(True)
+# 最終年の比較結果
+diff = apt_cumsum[-1] - ichijo_cumsum[-1]
+winner = "一条工務店" if diff > 0 else "マンション"
+savings = abs(diff) / 10000  # 万円換算
 
-plt.tight_layout()
-st.pyplot(fig)
+st.markdown(f"### 💡 {years}年後、**{winner}** の方が **{savings:,.0f}万円** お得です。")
