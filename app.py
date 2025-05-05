@@ -2,6 +2,9 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
+# ✅ フォント指定（文字化け対策）
+plt.rcParams['font.family'] = 'DejaVu Sans'
+
 st.set_page_config(page_title="住宅コスト比較シミュレーター", layout="centered")
 
 def calculate_monthly_payment(principal, annual_rate, years):
