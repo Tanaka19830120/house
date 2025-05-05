@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
 
 st.set_page_config(page_title="住宅コスト比較シミュレーター", layout="centered")
 
@@ -11,7 +10,7 @@ def calculate_monthly_payment(principal, annual_rate, years):
         return principal * 10000 / n
     return principal * 10000 * r * (1 + r) ** n / ((1 + r) ** n - 1)
 
-st.title("🏡 マンション vs 一条工務店：コスト比較シミュレーター（改良版）")
+st.title("🏡 マンション vs 一条工務店：コスト比較シミュレーター（軽量版・グラフなし）")
 
 # Sidebar Inputs
 st.sidebar.header("📊 基本設定")
@@ -82,18 +81,6 @@ df = pd.DataFrame({
 
 st.subheader("📄 年別支払い内訳")
 st.dataframe(df.style.format({col: "{:,.0f}" for col in df.columns if col != "Year"}), use_container_width=True)
-
-# グラフ描画
-fig, ax = plt.subplots()
-ax.plot(df["Year"], df["マンション 年間支出 (円)"], label="マンション 年間", linestyle="--")
-ax.plot(df["Year"], df["一条 年間支出 (円)"], label="一条 年間", linestyle="--")
-ax.plot(df["Year"], df["マンション 累積支出 (円)"], label="マンション 累積")
-ax.plot(df["Year"], df["一条 累積支出 (円)"], label="一条 累積")
-ax.set_xlabel("年")
-ax.set_ylabel("支出額（円）")
-ax.set_title("年間支出＆累積支出グラフ")
-ax.legend()
-st.pyplot(fig)
 
 # Summary
 diff = apt_cumsum[-1] - ichijo_cumsum[-1]
