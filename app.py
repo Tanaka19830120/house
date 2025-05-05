@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd
 
 st.set_page_config(page_title="住宅コスト比較シミュレーター", layout="centered")
 
@@ -39,39 +40,40 @@ ichijo_kojo_rate = st.sidebar.number_input("住宅ローン控除還元率（％
 st.sidebar.subheader("📈 共通設定")
 inflation_rate = st.sidebar.slider("インフレ率（％）", 0.0, 5.0, 1.0, key="inflation_rate")
 
-# 計算
+# 月額ローン計算
 apt_monthly = calculate_monthly_payment(apt_loan, apt_loan_rate, apt_loan_years)
 ichijo_monthly = calculate_monthly_payment(ichijo_loan, ichijo_loan_rate, ichijo_loan_years)
 
-apt_monthly_list = []
-ichijo_monthly_list = []
+apt_yearly_list = []
+ichijo_yearly_list = []
 
 for y in range(1, years + 1):
     inflator = (1 + inflation_rate / 100) ** (y - 1)
 
-    apt_total = apt_monthly if y <= apt_loan_years else 0
-    apt_total += (apt_kanri + apt_shuzen + apt_parking + apt_utility) * 10000 * inflator
+    # マンション年間支出
+    apt_total = apt_monthly * 12 if y <= apt_loan_years else 0
+    apt_total += (apt_kanri + apt_shuzen + apt_parking + apt_utility) * 10000 * 12 * inflator
     if y <= apt_kojo_years:
-        apt_total -= apt_loan * 10000 * apt_kojo_rate / 100 / 12
-    apt_monthly_list.append(apt_total)
+        apt_total -= apt_loan * 10000 * apt_kojo_rate / 100
+    apt_yearly_list.append(apt_total)
 
-    ichijo_total = ichijo_monthly if y <= ichijo_loan_years else 0
-    ichijo_total += (ichijo_utility - ichijo_solar) * 10000
+    # 一条年間支出
+    ichijo_total = ichijo_monthly * 12 if y <= ichijo_loan_years else 0
+    ichijo_total += (ichijo_utility - ichijo_solar) * 10000 * 12
     if y == ichijo_repair_year:
-        ichijo_total += ichijo_repair_cost * 10000 / 12
+        ichijo_total += ichijo_repair_cost * 10000
     if y <= ichijo_kojo_years:
-        ichijo_total -= ichijo_loan * 10000 * ichijo_kojo_rate / 100 / 12
-    ichijo_monthly_list.append(ichijo_total)
+        ichijo_total -= ichijo_loan * 10000 * ichijo_kojo_rate / 100
+    ichijo_yearly_list.append(ichijo_total)
 
-apt_cumsum = [sum(apt_monthly_list[:i + 1]) for i in range(years)]
-ichijo_cumsum = [sum(ichijo_monthly_list[:i + 1]) for i in range(years)]
+apt_cumsum = [sum(apt_yearly_list[:i + 1]) for i in range(years)]
+ichijo_cumsum = [sum(ichijo_yearly_list[:i + 1]) for i in range(years)]
 
-# 結果表示（表形式）
-import pandas as pd
+# 結果表示
 df = pd.DataFrame({
     "Year": list(range(1, years + 1)),
-    "Mansion Monthly (円)": [f"{int(v):,}" for v in apt_monthly_list],
-    "Ichijo Monthly (円)": [f"{int(v):,}" for v in ichijo_monthly_list],
+    "Mansion Yearly (円)": [f"{int(v):,}" for v in apt_yearly_list],
+    "Ichijo Yearly (円)": [f"{int(v):,}" for v in ichijo_yearly_list],
     "Mansion Cumulative (円)": [f"{int(v):,}" for v in apt_cumsum],
     "Ichijo Cumulative (円)": [f"{int(v):,}" for v in ichijo_cumsum],
 })
